@@ -140,6 +140,33 @@
   transform: none;
 }
 
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.2);
+  }
+
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 5px rgba(0, 0, 0, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+.group:hover .level-status-dot {
+  animation: pulse 1.1s ease-in-out infinite;
+}
+
+.level-lightbox {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -149,5 +176,9 @@
     opacity: 1;
     transform: none;
     transition: none;
+  }
+
+  .group:hover .level-status-dot {
+    animation: none;
   }
 }
