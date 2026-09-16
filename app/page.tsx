@@ -1,10 +1,12 @@
 import { SiteHeader } from '@/components/site-header'
 import { Hero } from '@/components/hero'
+import { TrustFacts } from '@/components/trust-facts'
+import { RenovationLevels } from '@/components/renovation-levels'
 import { ServicesBento } from '@/components/services-bento'
-import { BeforeAfter } from '@/components/before-after'
 import { ProcessTimeline } from '@/components/process-timeline'
-import { Portfolio } from '@/components/portfolio'
-import { Transparency } from '@/components/transparency'
+import { CaseInspirations } from '@/components/case-inspirations'
+import { RealWork } from '@/components/real-work'
+import { Faq } from '@/components/faq'
 import { ContactFooter } from '@/components/contact-footer'
 
 export default function Page() {
@@ -13,11 +15,13 @@ export default function Page() {
       <SiteHeader />
       <main>
         <Hero />
+        <TrustFacts />
+        <RenovationLevels />
         <ServicesBento />
-        <BeforeAfter />
         <ProcessTimeline />
-        <Portfolio />
-        <Transparency />
+        <CaseInspirations />
+        <RealWork />
+        <Faq />
         <ContactFooter />
       </main>
     </>

@@ -22,6 +22,8 @@ import {
   UtensilsCrossed,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getWhatsAppUrl, useI18n, type Locale } from '@/lib/i18n'
+import { calcText } from '@/lib/calculator-copy'
 
 type ProjectType = 'bathroom' | 'kitchen' | 'integral'
 type PropertyCondition = 'lived-in' | 'newbuild'
@@ -142,13 +144,15 @@ const initialState: CalculatorState = {
   builtInStorage: false,
 }
 
-const currency = new Intl.NumberFormat('ru-RU', {
-  style: 'currency',
-  currency: 'EUR',
-  maximumFractionDigits: 0,
-})
+function formatCurrency(value: number, locale: Locale) {
+  return new Intl.NumberFormat(locale === 'ru' ? 'ru-RU' : locale === 'es' ? 'es-ES' : locale === 'fr' ? 'fr-FR' : 'en-GB', {
+    style: 'currency', currency: 'EUR', maximumFractionDigits: 0,
+  }).format(value)
+}
 
 export function Calculator() {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   const [step, setStep] = useState(1)
   const [direction, setDirection] = useState(1)
   const [state, setState] = useState<CalculatorState>(initialState)
@@ -311,14 +315,14 @@ export function Calculator() {
         <div className="mb-8 flex flex-col gap-5 md:mb-10 md:flex-row md:items-end md:justify-between">
           <div className="max-w-3xl">
             <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-primary">
-              / Калькулятор ремонта
+              / {tx('Калькулятор ремонта')}
             </p>
             <h1 className="font-display text-[clamp(2.25rem,5vw,4.75rem)] font-bold leading-[0.98] tracking-tight text-balance">
-              Предварительная смета <span className="text-primary text-glow">без лишних вопросов.</span>
+              {tx('Предварительная смета')} <span className="text-primary text-glow">{tx('без лишних вопросов.')}</span>
             </h1>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Вопросы меняются под выбранный тип ремонта. Расчёт адаптирован для проектов в Валенсии и показан в евро.
+            {tx('Вопросы меняются под выбранный тип ремонта. Расчёт адаптирован для проектов в Валенсии и показан в евро.')}
           </p>
         </div>
 
@@ -338,15 +342,15 @@ export function Calculator() {
               <div className="mb-8 flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    Шаг {String(step).padStart(2, '0')} / 08
+                    {tx('Шаг')} {String(step).padStart(2, '0')} / 08
                   </p>
                   <h2 className="mt-2 font-display text-2xl font-bold md:text-3xl">
-                    {STEP_DATA[step - 1].label}
+                    {tx(STEP_DATA[step - 1].label)}
                   </h2>
                 </div>
                 {step < 8 && (
                   <span className="hidden rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs text-primary sm:inline-flex">
-                    {PROJECT_LABELS[state.projectType]}
+                    {tx(PROJECT_LABELS[state.projectType])}
                   </span>
                 )}
               </div>
@@ -382,14 +386,14 @@ export function Calculator() {
                     disabled={step === 1}
                     className="inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:pointer-events-none disabled:opacity-0"
                   >
-                    <ArrowLeft className="h-4 w-4" /> Назад
+                    <ArrowLeft className="h-4 w-4" /> {tx('Назад')}
                   </button>
                   <button
                     type="button"
                     onClick={() => goToStep(step + 1)}
                     className="group inline-flex items-center gap-3 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-10px] shadow-primary transition-shadow hover:shadow-[0_0_38px_-8px] hover:shadow-primary"
                   >
-                    {step === 7 ? 'Рассчитать' : 'Продолжить'}
+                    {tx(step === 7 ? 'Рассчитать' : 'Продолжить')}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </div>
@@ -399,7 +403,7 @@ export function Calculator() {
         </div>
 
         <p className="mx-auto mt-6 max-w-2xl text-center text-xs leading-relaxed text-muted-foreground">
-          Результат является предварительной оценкой. Точная стоимость определяется после замера и согласования спецификации.
+          {tx('Результат является предварительной оценкой. Точная стоимость определяется после замера и согласования спецификации.')}
         </p>
       </div>
     </main>
@@ -413,6 +417,8 @@ function StepNavigation({
   currentStep: number
   onStepClick: (step: number) => void
 }) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   const stepListRef = useRef<HTMLOListElement>(null)
   const activeStepRef = useRef<HTMLButtonElement>(null)
 
@@ -429,7 +435,7 @@ function StepNavigation({
 
   return (
     <aside className="min-w-0 border-b border-border bg-background/45 p-4 lg:border-b-0 lg:border-r lg:p-6">
-      <ol ref={stepListRef} className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label="Этапы расчёта">
+      <ol ref={stepListRef} className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible" aria-label={tx('Этапы расчёта')}>
         {STEP_DATA.map((item, index) => {
           const number = index + 1
           const Icon = item.icon
@@ -462,7 +468,7 @@ function StepNavigation({
                 </span>
                 <span>
                   <span className="block font-mono text-[10px] text-muted-foreground">{String(number).padStart(2, '0')}</span>
-                  <span className="mt-0.5 block text-xs font-semibold">{item.label}</span>
+                  <span className="mt-0.5 block text-xs font-semibold">{tx(item.label)}</span>
                 </span>
               </button>
             </li>
@@ -828,19 +834,22 @@ function StepSection({
   description: string
   children: ReactNode
 }) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   return (
     <div>
-      <h3 className="font-display text-xl font-bold md:text-2xl">{title}</h3>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{description}</p>
+      <h3 className="font-display text-xl font-bold md:text-2xl">{tx(title)}</h3>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">{tx(description)}</p>
       <div className="mt-7 space-y-6">{children}</div>
     </div>
   )
 }
 
 function Question({ title, children }: { title: string; children: ReactNode }) {
+  const { locale } = useI18n()
   return (
     <fieldset>
-      <legend className="mb-3 text-sm font-semibold text-foreground">{title}</legend>
+      <legend className="mb-3 text-sm font-semibold text-foreground">{calcText(title, locale)}</legend>
       {children}
     </fieldset>
   )
@@ -859,6 +868,8 @@ function ProjectChoiceCard({
   detail: string
   onClick: () => void
 }) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   return (
     <button
       type="button"
@@ -879,8 +890,8 @@ function ProjectChoiceCard({
           {selected && <Check className="h-4 w-4" />}
         </span>
       </span>
-      <span className="mt-10 block font-display text-xl font-bold text-foreground">{title}</span>
-      <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{detail}</span>
+      <span className="mt-10 block font-display text-xl font-bold text-foreground">{tx(title)}</span>
+      <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{tx(detail)}</span>
     </button>
   )
 }
@@ -900,6 +911,8 @@ function AreaControl({
   value: number
   onChange: (value: number) => void
 }) {
+  const { locale } = useI18n()
+  const translatedLabel = calcText(label, locale)
   const setClampedValue = (nextValue: number) => {
     if (Number.isNaN(nextValue)) return
     onChange(Math.min(max, Math.max(min, nextValue)))
@@ -909,8 +922,8 @@ function AreaControl({
     <div className="rounded-3xl border border-border bg-background/35 p-5 sm:p-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-semibold">{label}</p>
-          <p className="mt-1 text-xs text-muted-foreground">От {min} до {max} м²</p>
+          <p className="text-sm font-semibold">{translatedLabel}</p>
+          <p className="mt-1 text-xs text-muted-foreground">{locale === 'ru' ? `От ${min} до ${max} м²` : locale === 'es' ? `De ${min} a ${max} m²` : locale === 'fr' ? `De ${min} à ${max} m²` : `${min} to ${max} m²`}</p>
         </div>
         <label className="flex items-baseline gap-2">
           <input
@@ -921,7 +934,7 @@ function AreaControl({
             value={value}
             onChange={(event) => setClampedValue(Number(event.target.value))}
             className="w-24 border-0 bg-transparent p-0 text-right font-display text-3xl font-bold text-primary outline-none"
-            aria-label={label}
+            aria-label={translatedLabel}
           />
           <span className="text-sm text-muted-foreground">м²</span>
         </label>
@@ -934,7 +947,7 @@ function AreaControl({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         className="mt-6 h-1.5 w-full cursor-pointer appearance-none rounded-full bg-secondary accent-primary [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
-        aria-label={`${label}: от ${min} до ${max} квадратных метров`}
+        aria-label={translatedLabel}
       />
     </div>
   )
@@ -951,6 +964,8 @@ function ChoiceCard({
   detail: string
   onClick: () => void
 }) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   return (
     <button
       type="button"
@@ -964,12 +979,12 @@ function ChoiceCard({
       )}
     >
       <span className="flex items-start justify-between gap-3">
-        <span className="font-display text-base font-bold text-foreground">{title}</span>
+        <span className="font-display text-base font-bold text-foreground">{tx(title)}</span>
         <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full border', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>
           {selected && <Check className="h-3 w-3" />}
         </span>
       </span>
-      <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{detail}</span>
+      <span className="mt-2 block text-xs leading-relaxed text-muted-foreground">{tx(detail)}</span>
     </button>
   )
 }
@@ -987,16 +1002,18 @@ function BinaryChoice({
   recommended?: boolean
   compact?: boolean
 }) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
   return (
     <div
       role="group"
-      aria-label={title}
+      aria-label={tx(title)}
       className={cn('rounded-2xl border border-border bg-background/30 p-4', !compact && 'sm:p-5')}
     >
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="pr-3 text-sm font-semibold">
-          {title}
-          {recommended && <span className="ml-2 text-[10px] uppercase tracking-wide text-primary">рекомендуем</span>}
+          {tx(title)}
+          {recommended && <span className="ml-2 text-[10px] uppercase tracking-wide text-primary">{tx('рекомендуем')}</span>}
         </p>
         <div className="grid shrink-0 grid-cols-2 gap-2">
           {[true, false].map((option) => (
@@ -1012,7 +1029,7 @@ function BinaryChoice({
                   : 'border-border bg-secondary/30 text-muted-foreground hover:text-foreground',
               )}
             >
-              {option ? 'Да' : 'Нет'}
+              {tx(option ? 'Да' : 'Нет')}
             </button>
           ))}
         </div>
@@ -1036,20 +1053,25 @@ function Counter({
   max: number
   onChange: (value: number) => void
 }) {
+  const { locale } = useI18n()
+  const translatedLabel = calcText(label, locale)
   return (
     <div className="rounded-2xl border border-border bg-background/30 p-5">
-      <p className="text-sm font-semibold">{label}</p>
-      <p className="mt-1 min-h-8 text-xs leading-relaxed text-muted-foreground">{hint}</p>
+      <p className="text-sm font-semibold">{translatedLabel}</p>
+      <p className="mt-1 min-h-8 text-xs leading-relaxed text-muted-foreground">{calcText(hint, locale)}</p>
       <div className="mt-5 flex items-center justify-between rounded-xl border border-border bg-secondary/30 p-1.5">
-        <button type="button" aria-label={`Уменьшить: ${label}`} onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} className="h-9 w-9 rounded-lg text-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30">−</button>
+        <button type="button" aria-label={translatedLabel} onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min} className="h-9 w-9 rounded-lg text-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30">−</button>
         <span className="font-display text-xl font-bold text-primary">{value}</span>
-        <button type="button" aria-label={`Увеличить: ${label}`} onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} className="h-9 w-9 rounded-lg text-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30">+</button>
+        <button type="button" aria-label={translatedLabel} onClick={() => onChange(Math.min(max, value + 1))} disabled={value >= max} className="h-9 w-9 rounded-lg text-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30">+</button>
       </div>
     </div>
   )
 }
 
 function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset }: StepContentProps) {
+  const { locale, t } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
+
   if (calculating) {
     return (
       <div className="flex min-h-[30rem] flex-col items-center justify-center text-center">
@@ -1058,8 +1080,8 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
           <span className="absolute inset-3 animate-spin rounded-full border-2 border-border border-t-primary" />
           <LoaderCircle className="h-8 w-8 animate-pulse text-primary" />
         </div>
-        <h3 className="mt-8 font-display text-2xl font-bold">Собираем предварительную смету</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Учитываем выбранные работы и материалы…</p>
+        <h3 className="mt-8 font-display text-2xl font-bold">{tx('Собираем предварительную смету')}</h3>
+        <p className="mt-2 text-sm text-muted-foreground">{tx('Учитываем выбранные работы и материалы…')}</p>
       </div>
     )
   }
@@ -1070,12 +1092,12 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_32px_-6px] shadow-primary">
           <Check className="h-8 w-8" />
         </div>
-        <h3 className="mt-6 font-display text-3xl font-bold">Заявка принята</h3>
+        <h3 className="mt-6 font-display text-3xl font-bold">{tx('WhatsApp готов')}</h3>
         <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-          Это демонстрационный сценарий. После подключения формы специалист получит параметры проекта и свяжется с вами.
+          {tx('Проверьте подготовленное сообщение в WhatsApp и нажмите «Отправить», чтобы передать параметры проекта.')}
         </p>
         <button type="button" onClick={onReset} className="mt-8 inline-flex items-center gap-2 rounded-full border border-border px-5 py-3 text-sm font-semibold transition-colors hover:border-primary/50 hover:bg-primary/10">
-          <RotateCcw className="h-4 w-4" /> Новый расчёт
+          <RotateCcw className="h-4 w-4" /> {tx('Новый расчёт')}
         </button>
       </div>
     )
@@ -1083,6 +1105,19 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const data = new FormData(event.currentTarget)
+    const name = String(data.get('name') ?? '').trim()
+    const phone = String(data.get('phone') ?? '').trim()
+    const email = String(data.get('email') ?? '').trim()
+    const message = [
+      locale === 'ru' ? 'Здравствуйте! Хочу уточнить смету на ремонт в Валенсии.' : locale === 'es' ? '¡Hola! Quiero concretar el presupuesto de una reforma en Valencia.' : locale === 'fr' ? 'Bonjour ! Je souhaite préciser le devis de rénovation à Valence.' : 'Hello! I would like to confirm a renovation estimate in Valencia.',
+      `${tx(PROJECT_LABELS[state.projectType])}: ${formatCurrency(estimate.low, locale)}–${formatCurrency(estimate.high, locale)}`,
+      `${estimate.days}–${estimate.days + 5} ${locale === 'ru' ? 'дней' : locale === 'es' ? 'días' : locale === 'fr' ? 'jours' : 'days'}`,
+      `${tx('Имя')}: ${name}`,
+      `${tx('Телефон')}: ${phone}`,
+      `Email: ${email}`,
+    ].join('\n')
+    window.open(getWhatsAppUrl(message), '_blank', 'noopener,noreferrer')
     onSubmit()
   }
 
@@ -1091,19 +1126,19 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
       <div className="overflow-hidden rounded-3xl border border-primary/35 bg-primary/8 p-6 glow-border sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-background/50 px-3 py-1.5 text-xs text-primary">
-            <ShieldCheck className="h-4 w-4" /> {PROJECT_LABELS[state.projectType]}
+            <ShieldCheck className="h-4 w-4" /> {tx(PROJECT_LABELS[state.projectType])}
           </span>
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-            <Clock3 className="h-4 w-4 text-primary" /> ≈ {estimate.days}–{estimate.days + 5} дней
+            <Clock3 className="h-4 w-4 text-primary" /> ≈ {estimate.days}–{estimate.days + 5} {locale === 'ru' ? 'дней' : locale === 'es' ? 'días' : locale === 'fr' ? 'jours' : 'days'}
           </span>
         </div>
 
-        <p className="mt-7 text-sm text-muted-foreground">Ориентировочный диапазон</p>
+        <p className="mt-7 text-sm text-muted-foreground">{tx('Ориентировочный диапазон')}</p>
         <p className="mt-2 whitespace-nowrap font-display text-[clamp(1.75rem,3vw,3.25rem)] font-bold leading-none text-primary text-glow">
-          {currency.format(estimate.low)}–{currency.format(estimate.high)}
+          {formatCurrency(estimate.low, locale)}–{formatCurrency(estimate.high, locale)}
         </p>
         <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          Средний ориентир: {currency.format(estimate.total)}. Налоги и окончательная спецификация уточняются после замера.
+          {tx('Средний ориентир:')} {formatCurrency(estimate.total, locale)}. {tx('Налоги и окончательная спецификация уточняются после замера.')}
         </p>
 
         <div className="mt-8 space-y-4 border-t border-border pt-6">
@@ -1112,8 +1147,8 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
             return (
               <div key={row.key}>
                 <div className="flex items-center justify-between gap-4 text-xs">
-                  <span className="text-muted-foreground">{row.label}</span>
-                  <span className="font-mono font-semibold text-foreground">{currency.format(row.value)}</span>
+                  <span className="text-muted-foreground">{tx(row.label)}</span>
+                  <span className="font-mono font-semibold text-foreground">{formatCurrency(row.value, locale)}</span>
                 </div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
                   <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.7 }} className={cn('h-full rounded-full', row.color)} />
@@ -1125,14 +1160,14 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col rounded-3xl border border-border bg-background/35 p-6 sm:p-8">
-        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">Следующий шаг</p>
-        <h3 className="mt-3 font-display text-2xl font-bold">Получить точную смету</h3>
+        <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">{tx('Следующий шаг')}</p>
+        <h3 className="mt-3 font-display text-2xl font-bold">{tx('Получить точную смету')}</h3>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          Оставьте контакты — параметры расчёта уже подготовлены.
+          {tx('Оставьте контакты — параметры расчёта уже подготовлены.')}
         </p>
         <div className="mt-6 space-y-4">
           <FormField label="Имя">
-            <input required name="name" placeholder="Как к вам обращаться" className="calculator-input" />
+            <input required name="name" placeholder={tx('Как к вам обращаться')} className="calculator-input" />
           </FormField>
           <FormField label="Телефон">
             <input required name="phone" type="tel" placeholder="+34 ___ ___ ___" className="calculator-input" />
@@ -1142,20 +1177,24 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
           </FormField>
         </div>
         <button type="submit" className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-[0_0_34px_-7px] hover:shadow-primary">
-          Отправить расчёт <Send className="h-4 w-4" />
+          {tx('Отправить расчёт')} <Send className="h-4 w-4" />
         </button>
         <button type="button" onClick={onReset} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
-          <RotateCcw className="h-3.5 w-3.5" /> Начать заново
+          <RotateCcw className="h-3.5 w-3.5" /> {tx('Начать заново')}
         </button>
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-muted-foreground">
+          {t('contact.privacy.prefix')} <a href="/privacy" className="underline decoration-primary/40 underline-offset-2 hover:text-foreground">{t('contact.privacy.link')}</a>.
+        </p>
       </form>
     </div>
   )
 }
 
 function FormField({ label, children }: { label: string; children: ReactNode }) {
+  const { locale } = useI18n()
   return (
     <label className="block">
-      <span className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span className="mb-2 block text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{calcText(label, locale)}</span>
       {children}
     </label>
   )

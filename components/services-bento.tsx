@@ -1,141 +1,73 @@
 'use client'
 
-import Image from 'next/image'
-import { motion } from 'framer-motion'
-import {
-  Building2,
-  Boxes,
-  Compass,
-  Home,
-  Ruler,
-} from 'lucide-react'
+import { Boxes, DraftingCompass, Hammer } from 'lucide-react'
 import { Reveal } from '@/components/reveal'
+import { useI18n } from '@/lib/i18n'
 
-type Service = {
-  title: string
-  text: string
-  icon: typeof Compass
-  tone: 'lime' | 'cyan' | 'amber'
-  className: string
-  features: string[]
-  image?: string
-}
-
-const SERVICES: Service[] = [
+const SERVICES = [
   {
-    title: 'Ремонт под ключ',
-    text: 'Создаём интерьер и полностью реализуем его — от обмеров и планировки до финальной комплектации.',
-    icon: Compass,
-    tone: 'lime',
-    className: 'md:col-span-7 md:row-span-2 md:min-h-[34rem]',
-    features: ['Дизайн-проект', 'Инженерия', 'Реализация'],
-    image: '/images/service-turnkey.png',
+    title: 'services.renovation.title', text: 'services.renovation.desc',
+    tags: ['hero.apartments', 'hero.houses', 'hero.commercial'],
+    icon: Hammer,
+    style: 'bg-primary text-white',
   },
   {
-    title: 'Управление стройкой',
-    text: 'Составляем график, координируем специалистов и проверяем качество каждого этапа.',
-    icon: Ruler,
-    tone: 'cyan',
-    className: 'md:col-span-5',
-    features: ['Смета и график', 'Контроль качества'],
+    title: 'services.design.title', text: 'services.design.desc',
+    tags: ['services.tags.project', 'services.tags.drawings', 'services.tags.engineering'],
+    icon: DraftingCompass,
+    style: 'bg-cyan text-white',
   },
   {
-    title: 'Умный дом и климат',
-    text: 'Объединяем освещение, климат и безопасность в понятную систему управления.',
-    icon: Home,
-    tone: 'amber',
-    className: 'md:col-span-5',
-    features: ['Световые сценарии', 'Климат-контроль'],
-  },
-  {
-    title: 'Коммерческие интерьеры',
-    text: 'Проектируем и обновляем офисы, магазины, рестораны и другие пространства для бизнеса.',
-    icon: Building2,
-    tone: 'cyan',
-    className: 'md:col-span-6',
-    features: ['Срок запуска', 'Работа по нормам'],
-  },
-  {
-    title: 'Комплектация объекта',
-    text: 'Подбираем отделку, свет, сантехнику и мебель — и организуем поставки на объект.',
+    title: 'services.supply.title', text: 'services.supply.desc',
+    tags: ['services.tags.selection', 'services.tags.purchase', 'services.tags.delivery'],
     icon: Boxes,
-    tone: 'lime',
-    className: 'md:col-span-6',
-    features: ['Подбор материалов', 'Закупка и доставка'],
+    style: 'bg-lime text-white',
   },
-]
-
-const TONE_STYLES = {
-  lime: 'text-lime border-lime/30 hover:border-lime/70 hover:shadow-[0_0_35px_-18px] hover:shadow-lime',
-  cyan: 'text-cyan border-cyan/25 hover:border-cyan/60 hover:shadow-[0_0_35px_-18px] hover:shadow-cyan',
-  amber: 'text-amber border-amber/25 hover:border-amber/60 hover:shadow-[0_0_35px_-18px] hover:shadow-amber',
-} as const
+] as const
 
 export function ServicesBento() {
+  const { t } = useI18n()
   return (
-    <section id="services" className="relative mx-auto max-w-7xl px-4 py-24 md:py-32">
-      <Reveal className="mb-12 flex flex-col gap-6 md:mb-16 md:flex-row md:items-end md:justify-between">
-        <div className="max-w-3xl">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.25em] text-primary">
-            / 01 — Услуги
-          </p>
-          <h2 className="font-display text-[clamp(2rem,5vw,3.75rem)] font-bold leading-[1.02] tracking-tight text-balance">
-            Одна команда. Весь путь от идеи до готового пространства.
+    <section id="services" className="relative scroll-mt-24 px-4 py-16 md:py-20">
+      <div className="mx-auto max-w-7xl">
+        <Reveal className="mb-9 max-w-3xl">
+          <p className="mb-2 font-mono text-xs uppercase tracking-[0.23em] text-primary">{t('services.eyebrow')}</p>
+          <h2 className="font-display text-[clamp(2.25rem,4vw,4rem)] font-bold leading-[0.96] tracking-tight text-balance">
+            {t('services.title')}
           </h2>
-        </div>
-        <p className="max-w-sm text-pretty text-sm leading-relaxed text-muted-foreground">
-          Проектируем, строим и комплектуем объекты в Валенсии. У вас один план и понятный бюджет,
-          а за результат отвечает одна команда.
-        </p>
-      </Reveal>
+          <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">
+            {t('services.note')}
+          </p>
+        </Reveal>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-12">
-        {SERVICES.map((service, index) => {
-          const Icon = service.icon
-          return (
-            <Reveal key={service.title} className={service.className} delay={index * 70} as="article">
-              <motion.div
-                whileHover={{ y: -4 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-                className={`group relative flex h-full min-h-[17rem] flex-col justify-between overflow-hidden rounded-3xl border bg-card/80 p-6 transition-colors duration-300 md:p-8 ${TONE_STYLES[service.tone]}`}
-              >
-                {service.image && (
-                  <Image
-                    src={service.image}
-                    alt="Команда ФОРМА выполняет ремонт под ключ"
-                    fill
-                    sizes="(min-width: 768px) 50vw, 100vw"
-                    className="object-cover opacity-35 transition-transform duration-700 group-hover:scale-105"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-br from-card/35 via-card/80 to-card" />
-                <div className="relative flex items-start justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-current/25 bg-background/60 backdrop-blur-md">
-                    <Icon className="h-6 w-6" aria-hidden="true" />
+        <div className="grid gap-4 md:grid-cols-3">
+          {SERVICES.map((service, index) => {
+            const Icon = service.icon
+            return (
+              <Reveal key={service.title} delay={index * 60} as="article">
+                <div className={`flex h-full min-h-[20rem] flex-col rounded-[1.75rem] p-6 shadow-[0_24px_60px_-40px] shadow-foreground/40 md:p-7 ${service.style}`}>
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/16">
+                      <Icon className="h-6 w-6" aria-hidden="true" />
+                    </span>
+                    <span className="font-mono text-xs text-white/65">/ 0{index + 1}</span>
                   </div>
-                  <span className="font-mono text-xs tracking-[0.18em] text-muted-foreground">
-                    / {String(index + 1).padStart(2, '0')}
-                  </span>
+                  <div className="mt-auto pt-10">
+                    <h3 className="font-display text-2xl font-bold">{t(service.title)}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-white/78">{t(service.text)}</p>
+                    <ul className="mt-5 flex flex-wrap gap-2" aria-label={t(service.title)}>
+                      {service.tags.map((tag) => (
+                        <li key={tag} className="rounded-full border border-white/25 bg-white/10 px-3 py-1.5 text-[11px] font-semibold">
+                          {t(tag)}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div className="relative mt-14">
-                  <h3 className="max-w-lg font-display text-2xl font-bold text-foreground md:text-[1.75rem]">
-                    {service.title}
-                  </h3>
-                  <p className="mt-3 max-w-md text-sm leading-relaxed text-muted-foreground">
-                    {service.text}
-                  </p>
-                  <ul className="mt-6 flex flex-wrap gap-2" aria-label="Состав услуги">
-                    {service.features.map((feature) => (
-                      <li key={feature} className="rounded-full border border-current/20 bg-background/45 px-3 py-1.5 text-[11px] font-medium text-foreground/80 backdrop-blur-md">
-                        {feature}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </motion.div>
-            </Reveal>
-          )
-        })}
+              </Reveal>
+            )
+          })}
+        </div>
       </div>
     </section>
   )

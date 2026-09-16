@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
+import { LanguageProvider } from '@/lib/i18n'
 import './globals.css'
 
 const inter = Inter({
@@ -16,14 +17,14 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'ФОРМА — Реновация и архитектурный ремонт премиум-класса',
+  title: 'ФОРМА — Ремонт и реконструкция в Валенсии',
   description:
-    'Инженерный подход, 3D-визуализация в реальном времени и прозрачная смета без сюрпризов. Дизайнерский ремонт под ключ с гарантией 5 лет.',
+    'Ремонт квартир, домов и коммерческих помещений в Валенсии — от оценки и проекта до готового объекта.',
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: '#111318',
+  colorScheme: 'light',
+  themeColor: '#fffaf2',
 }
 
 export default function RootLayout({
@@ -32,9 +33,9 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="ru" className={`${inter.variable} ${spaceGrotesk.variable} bg-background dark`}>
+    <html lang="ru" className={`${inter.variable} ${spaceGrotesk.variable} bg-background`}>
       <body className="font-sans antialiased">
-        {children}
+        <LanguageProvider>{children}</LanguageProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>
