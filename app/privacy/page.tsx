@@ -15,9 +15,9 @@ type Policy = {
 const POLICIES: Record<Locale, Policy> = {
   ru: {
     title: 'Политика конфиденциальности', updated: 'Обновлено: 16 сентября 2026 г.', back: 'На главную',
-    intro: 'Эта политика объясняет, как ФОРМА обрабатывает данные посетителей сайта и потенциальных клиентов в соответствии с RGPD и LOPDGDD.',
+    intro: 'Эта политика объясняет, как Adelfia Flow обрабатывает данные посетителей сайта и потенциальных клиентов в соответствии с RGPD и LOPDGDD.',
     sections: [
-      { title: '1. Кто отвечает за данные', paragraphs: ['Ответственный: ФОРМА (коммерческое наименование), Валенсия, Испания. Телефон и WhatsApp: +34 611 884 411. Полные фискальные реквизиты указываются в договоре и счетах.'] },
+      { title: '1. Кто отвечает за данные', paragraphs: ['Ответственный: Adelfia Flow (коммерческое наименование), Валенсия, Испания. Телефон и WhatsApp: +34 611 884 411. Полные фискальные реквизиты указываются в договоре и счетах.'] },
       { title: '2. Какие данные мы обрабатываем', paragraphs: ['Имя, телефон, email, содержание запроса, параметры проекта и технические данные, необходимые для работы и безопасности сайта.'] },
       { title: '3. Цели и правовые основания', paragraphs: ['Ответ на запрос, подготовка предварительного расчёта, организация осмотра и преддоговорное общение. Основание — меры по запросу потенциального клиента до заключения договора и законный интерес в защите сайта. Рекламные рассылки без отдельного согласия не проводятся.'] },
       { title: '4. WhatsApp и получатели', paragraphs: ['Сайт формирует текст сообщения, но не отправляет его автоматически. После нажатия кнопки откроется WhatsApp, где вы сами проверяете и отправляете данные. К такой обработке также применяются условия и политика Meta/WhatsApp. Данные могут быть доступны техническим поставщикам хостинга и сайта только в необходимом объёме.'] },
@@ -28,9 +28,9 @@ const POLICIES: Record<Locale, Policy> = {
   },
   es: {
     title: 'Política de privacidad', updated: 'Actualizada: 16 de septiembre de 2026', back: 'Volver al inicio',
-    intro: 'Esta política explica cómo FORMA trata los datos de visitantes y potenciales clientes conforme al RGPD y la LOPDGDD.',
+    intro: 'Esta política explica cómo Adelfia Flow trata los datos de visitantes y potenciales clientes conforme al RGPD y la LOPDGDD.',
     sections: [
-      { title: '1. Responsable del tratamiento', paragraphs: ['Responsable: FORMA (nombre comercial), Valencia, España. Teléfono y WhatsApp: +34 611 884 411. Los datos fiscales completos constan en contratos y facturas.'] },
+      { title: '1. Responsable del tratamiento', paragraphs: ['Responsable: Adelfia Flow (nombre comercial), Valencia, España. Teléfono y WhatsApp: +34 611 884 411. Los datos fiscales completos constan en contratos y facturas.'] },
       { title: '2. Datos tratados', paragraphs: ['Nombre, teléfono, correo electrónico, contenido de la consulta, datos del proyecto y datos técnicos necesarios para el funcionamiento y la seguridad del sitio.'] },
       { title: '3. Finalidad y base jurídica', paragraphs: ['Responder consultas, preparar estimaciones, organizar visitas y realizar actuaciones precontractuales. La base jurídica es la aplicación de medidas precontractuales solicitadas por la persona interesada y el interés legítimo en proteger el sitio. No enviamos publicidad sin consentimiento separado.'] },
       { title: '4. WhatsApp y destinatarios', paragraphs: ['El sitio prepara el texto, pero no lo envía automáticamente. WhatsApp se abre para que revises y envíes el mensaje. También se aplican las condiciones de Meta/WhatsApp. Los proveedores técnicos de alojamiento y del sitio podrán acceder solo a los datos necesarios.'] },
@@ -41,9 +41,9 @@ const POLICIES: Record<Locale, Policy> = {
   },
   en: {
     title: 'Privacy policy', updated: 'Updated: 16 September 2026', back: 'Back to home',
-    intro: 'This policy explains how FORMA processes visitor and prospective customer data under the GDPR and Spanish LOPDGDD.',
+    intro: 'This policy explains how Adelfia Flow processes visitor and prospective customer data under the GDPR and Spanish LOPDGDD.',
     sections: [
-      { title: '1. Data controller', paragraphs: ['Controller: FORMA (trading name), Valencia, Spain. Phone and WhatsApp: +34 611 884 411. Full tax details are included in contracts and invoices.'] },
+      { title: '1. Data controller', paragraphs: ['Controller: Adelfia Flow (trading name), Valencia, Spain. Phone and WhatsApp: +34 611 884 411. Full tax details are included in contracts and invoices.'] },
       { title: '2. Data we process', paragraphs: ['Name, phone, email, enquiry content, project details and technical data required for website operation and security.'] },
       { title: '3. Purpose and lawful basis', paragraphs: ['We answer enquiries, prepare estimates, arrange visits and take pre-contractual steps. The lawful basis is action requested before entering a contract and legitimate interest in site security. We do not send marketing without separate consent.'] },
       { title: '4. WhatsApp and recipients', paragraphs: ['The site prepares a message but does not send it automatically. WhatsApp opens so you can review and send it yourself. Meta/WhatsApp terms also apply. Hosting and website providers may access only the data required to provide their services.'] },
@@ -54,9 +54,9 @@ const POLICIES: Record<Locale, Policy> = {
   },
   fr: {
     title: 'Politique de confidentialité', updated: 'Mise à jour : 16 septembre 2026', back: 'Retour à l’accueil',
-    intro: 'Cette politique explique comment FORMA traite les données des visiteurs et prospects conformément au RGPD et à la LOPDGDD espagnole.',
+    intro: 'Cette politique explique comment Adelfia Flow traite les données des visiteurs et prospects conformément au RGPD et à la LOPDGDD espagnole.',
     sections: [
-      { title: '1. Responsable du traitement', paragraphs: ['Responsable : FORMA (nom commercial), Valence, Espagne. Téléphone et WhatsApp : +34 611 884 411. Les coordonnées fiscales complètes figurent dans les contrats et factures.'] },
+      { title: '1. Responsable du traitement', paragraphs: ['Responsable : Adelfia Flow (nom commercial), Valence, Espagne. Téléphone et WhatsApp : +34 611 884 411. Les coordonnées fiscales complètes figurent dans les contrats et factures.'] },
       { title: '2. Données traitées', paragraphs: ['Nom, téléphone, e-mail, contenu de la demande, informations sur le projet et données techniques nécessaires au fonctionnement et à la sécurité du site.'] },
       { title: '3. Finalité et base juridique', paragraphs: ['Nous répondons aux demandes, préparons des estimations, organisons les visites et prenons des mesures précontractuelles. La base juridique est la demande de mesures précontractuelles et l’intérêt légitime à protéger le site. Aucun marketing n’est envoyé sans consentement distinct.'] },
       { title: '4. WhatsApp et destinataires', paragraphs: ['Le site prépare le message sans l’envoyer automatiquement. WhatsApp s’ouvre afin que vous puissiez le vérifier et l’envoyer. Les conditions de Meta/WhatsApp s’appliquent également. Les prestataires techniques n’accèdent qu’aux données nécessaires.'] },

@@ -17,7 +17,7 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: 'ФОРМА — Ремонт и реконструкция в Валенсии',
+  title: 'Adelfia Flow — Ремонт и реконструкция в Валенсии',
   description:
     'Ремонт квартир, домов и коммерческих помещений в Валенсии — от оценки и проекта до готового объекта.',
 }

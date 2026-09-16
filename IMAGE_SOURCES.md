@@ -8,3 +8,5 @@
 - `premium.webp` — Misbaa eri, Pexels: https://www.pexels.com/photo/modern-elegant-living-room-interior-design-31949938/
 
 Pexels отмечает эти фотографии как бесплатные для использования. Файлы в `public/images/real-work/` подготовлены из материалов заказчика.
+
+`public/brand/adelfia-flow-mark.png` — упрощённая цветовая адаптация монограммы из предоставленного заказчиком изображения `WhatsApp Image 2026-09-16 at 18.05.32.jpeg`, созданная для использования в интерфейсе сайта.

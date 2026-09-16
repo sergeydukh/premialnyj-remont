@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { type FormEvent } from 'react'
 import { ArrowRight, CalendarCheck, Camera, FileCheck2, MapPin, MessageCircle, Phone } from 'lucide-react'
 import { Reveal } from '@/components/reveal'
@@ -102,11 +103,8 @@ export function ContactFooter() {
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-border pt-7 text-sm text-muted-foreground md:flex-row">
           <div className="flex items-center gap-2.5">
-            <span className="relative flex h-7 w-7 items-center justify-center">
-              <span className="absolute inset-0 rounded-md border border-primary/60" />
-              <span className="h-1.5 w-1.5 rounded-[2px] bg-primary" />
-            </span>
-            <span className="font-display font-bold text-foreground">ФОРМА</span>
+            <Image src="/brand/adelfia-flow-mark.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+            <span className="font-display font-bold text-foreground">Adelfia Flow</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex flex-wrap items-center justify-center gap-4 md:justify-end">

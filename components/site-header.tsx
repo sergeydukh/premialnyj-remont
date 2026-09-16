@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Menu, X, MessageCircle, Phone } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -24,6 +25,15 @@ export function SiteHeader() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    if (!open) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [open])
+
   return (
     <header
       className={cn(
@@ -34,16 +44,13 @@ export function SiteHeader() {
       <div className="mx-auto max-w-7xl px-4">
         <div
           className={cn(
-            'flex items-center justify-between rounded-2xl border border-border bg-card/88 px-4 py-3 shadow-sm backdrop-blur-xl transition-all duration-500 md:px-6',
+            'relative z-20 flex items-center justify-between rounded-2xl border border-border bg-card/95 px-4 py-3 shadow-sm backdrop-blur-xl transition-all duration-500 md:px-6',
             scrolled && 'shadow-[0_16px_45px_-30px] shadow-foreground/45',
           )}
         >
-          <a href="/" className="group flex items-center gap-2.5" aria-label={t('brand.home')}>
-            <span className="relative flex h-8 w-8 items-center justify-center">
-              <span className="absolute inset-0 rounded-md border border-primary/60 transition-transform duration-500 group-hover:rotate-45" />
-              <span className="h-2 w-2 rounded-[2px] bg-primary transition-transform duration-500 group-hover:scale-150" />
-            </span>
-            <span className="font-display text-lg font-bold tracking-tight">ФОРМА</span>
+          <a href="/" onClick={() => setOpen(false)} className="group flex min-w-0 items-center gap-2" aria-label={t('brand.home')}>
+            <Image src="/brand/adelfia-flow-mark.png" alt="" width={40} height={40} priority className="h-9 w-9 shrink-0 object-contain transition-transform duration-300 group-hover:scale-105" />
+            <span className="truncate font-display text-base font-bold tracking-tight sm:text-lg">Adelfia Flow</span>
           </a>
 
           <nav className="hidden items-center gap-1 lg:flex">
@@ -103,34 +110,37 @@ export function SiteHeader() {
         </div>
 
         {open && (
-          <nav className="glass mt-2 flex flex-col rounded-2xl border border-border p-2 lg:hidden">
-            {NAV.map((item) => (
+          <>
+            <button type="button" onClick={() => setOpen(false)} className="fixed inset-0 z-0 bg-foreground/25 backdrop-blur-[2px] lg:hidden" aria-label={t('nav.close')} />
+            <nav className="relative z-20 mt-2 flex max-h-[calc(100svh-6.5rem)] flex-col overflow-y-auto rounded-2xl border border-border bg-card p-3 shadow-[0_24px_70px_-20px] shadow-foreground/45 lg:hidden">
+              {NAV.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="rounded-xl border-b border-border px-4 py-3.5 text-base font-semibold text-foreground transition-colors last:border-b-0 hover:bg-accent"
+                >
+                  {t(item.label)}
+                </a>
+              ))}
               <a
-                key={item.href}
-                href={item.href}
+                href="/calculator"
                 onClick={() => setOpen(false)}
-                className="rounded-lg px-4 py-3 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-bold text-primary-foreground"
               >
-                {t(item.label)}
+                {t('nav.estimate')}
+                <MessageCircle className="h-4 w-4" />
               </a>
-            ))}
-            <a
-              href="/calculator"
-              onClick={() => setOpen(false)}
-              className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground"
-            >
-              {t('nav.estimate')}
-              <MessageCircle className="h-4 w-4" />
-            </a>
-            <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-2">
-              <a href="tel:+34611884411" className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-3 text-xs font-semibold">
-                <Phone className="h-4 w-4" /> {t('contact.call')}
-              </a>
-              <a href={getWhatsAppUrl(t('whatsapp.base'))} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-3 text-xs font-semibold">
-                <MessageCircle className="h-4 w-4" /> WhatsApp
-              </a>
-            </div>
-          </nav>
+              <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-2">
+                <a href="tel:+34611884411" className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-3 text-xs font-bold text-foreground">
+                  <Phone className="h-4 w-4" /> {t('contact.call')}
+                </a>
+                <a href={getWhatsAppUrl(t('whatsapp.base'))} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-3 py-3 text-xs font-bold text-foreground">
+                  <MessageCircle className="h-4 w-4" /> WhatsApp
+                </a>
+              </div>
+            </nav>
+          </>
         )}
       </div>
     </header>

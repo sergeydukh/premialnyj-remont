@@ -22,7 +22,7 @@ const MESSAGES: Record<string, Translation> = {
   'nav.language': { ru: 'Язык', es: 'Idioma', en: 'Language', fr: 'Langue' },
   'nav.open': { ru: 'Открыть меню', es: 'Abrir menú', en: 'Open menu', fr: 'Ouvrir le menu' },
   'nav.close': { ru: 'Закрыть меню', es: 'Cerrar menú', en: 'Close menu', fr: 'Fermer le menu' },
-  'brand.home': { ru: 'ФОРМА — на главную', es: 'FORMA — inicio', en: 'FORMA — home', fr: 'FORMA — accueil' },
+  'brand.home': { ru: 'Adelfia Flow — на главную', es: 'Adelfia Flow — inicio', en: 'Adelfia Flow — home', fr: 'Adelfia Flow — accueil' },
   'hero.location': { ru: 'Валенсия и провинция', es: 'Valencia y provincia', en: 'Valencia and province', fr: 'Valence et sa province' },
   'hero.title.before': { ru: 'Ремонт и', es: 'Reformas y', en: 'Renovation and', fr: 'Rénovation et' },
   'hero.title.accent': { ru: 'реконструкция', es: 'rehabilitación', en: 'remodelling', fr: 'réhabilitation' },
