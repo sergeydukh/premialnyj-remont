@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { SiteHeader } from '@/components/site-header'
 import { Calculator } from '@/components/calculator'
+import { CALCULATOR_METADATA } from '@/lib/locale'
+import { getRequestLocale } from '@/lib/request-locale'
 
-export const metadata: Metadata = {
-  title: 'Расчёт стоимости ремонта — Adelfia Flow',
-  description: 'Пошаговый предварительный расчёт стоимости ремонта ванной, кухни или всего объекта в Валенсии.',
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await getRequestLocale()
+  return CALCULATOR_METADATA[locale]
 }
 
 export default function CalculatorPage() {

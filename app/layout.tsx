@@ -2,6 +2,8 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import { LanguageProvider } from '@/lib/i18n'
+import { SITE_METADATA } from '@/lib/locale'
+import { getRequestLocale } from '@/lib/request-locale'
 import './globals.css'
 
 const inter = Inter({
@@ -16,10 +18,9 @@ const spaceGrotesk = Space_Grotesk({
   display: 'swap',
 })
 
-export const metadata: Metadata = {
-  title: 'Adelfia Flow — Ремонт и реконструкция в Валенсии',
-  description:
-    'Ремонт квартир, домов и коммерческих помещений в Валенсии — от оценки и проекта до готового объекта.',
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale } = await getRequestLocale()
+  return SITE_METADATA[locale]
 }
 
 export const viewport: Viewport = {
@@ -27,15 +28,17 @@ export const viewport: Viewport = {
   themeColor: '#fffaf2',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const { locale, shouldPrompt } = await getRequestLocale()
+
   return (
-    <html lang="ru" className={`${inter.variable} ${spaceGrotesk.variable} bg-background`}>
+    <html lang={locale} className={`${inter.variable} ${spaceGrotesk.variable} bg-background`}>
       <body className="font-sans antialiased">
-        <LanguageProvider>{children}</LanguageProvider>
+        <LanguageProvider initialLocale={locale} shouldPrompt={shouldPrompt}>{children}</LanguageProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

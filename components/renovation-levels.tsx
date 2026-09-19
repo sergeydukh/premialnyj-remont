@@ -40,12 +40,12 @@ const LEVELS = [
     name: 'levels.lux.name', tagline: 'levels.lux.tag', description: 'levels.lux.desc',
     features: ['levels.features.natural', 'levels.features.customFurniture', 'levels.features.climate'],
     images: [
-      '/images/levels/real/lux-4.webp',
-      '/images/levels/real/lux-1.webp',
       '/images/levels/real/lux-2.webp',
       '/images/levels/real/lux-3.webp',
-      '/images/levels/real/lux-5.webp',
       '/images/levels/real/lux-6.webp',
+      '/images/levels/real/lux-5.webp',
+      '/images/levels/real/lux-4.webp',
+      '/images/levels/real/lux-1.webp',
     ],
     realProject: true,
     collection: true,
@@ -74,6 +74,7 @@ const LEVELS = [
 ] as const
 
 type Level = (typeof LEVELS)[number]
+const DISPLAY_LEVELS = [LEVELS[0], LEVELS[1], LEVELS[3], LEVELS[2]] as const
 
 type LevelCardProps = {
   index: number
@@ -214,8 +215,8 @@ export function RenovationLevels() {
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const triggerRef = useRef<HTMLElement | null>(null)
   const galleryTriggerRef = useRef<HTMLButtonElement | null>(null)
-  const selected = selectedIndex === null ? null : LEVELS[selectedIndex]
-  const galleryLevel = gallery === null ? null : LEVELS[gallery.levelIndex]
+  const selected = selectedIndex === null ? null : DISPLAY_LEVELS[selectedIndex]
+  const galleryLevel = gallery === null ? null : DISPLAY_LEVELS[gallery.levelIndex]
 
   const openLevel = (index: number) => {
     triggerRef.current = document.activeElement as HTMLElement | null
@@ -260,7 +261,7 @@ export function RenovationLevels() {
         </Reveal>
 
         <div className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-4 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 xl:grid-cols-4">
-          {LEVELS.map((level, index) => (
+          {DISPLAY_LEVELS.map((level, index) => (
             <LevelCard
               key={level.name}
               index={index}

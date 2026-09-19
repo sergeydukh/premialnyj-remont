@@ -1,15 +1,17 @@
 'use client'
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  LANGUAGE_COOKIE,
+  LANGUAGE_STORAGE_KEY,
+  LOCALES,
+  getPageMetadata,
+  isLocale,
+  type Locale,
+} from '@/lib/locale'
 
-export type Locale = 'ru' | 'es' | 'en' | 'fr'
-
-export const LOCALES: Array<{ code: Locale; label: string }> = [
-  { code: 'ru', label: 'RU' },
-  { code: 'es', label: 'ES' },
-  { code: 'en', label: 'EN' },
-  { code: 'fr', label: 'FR' },
-]
+export { LOCALES }
+export type { Locale }
 
 type Translation = Record<Locale, string>
 
@@ -20,6 +22,10 @@ const MESSAGES: Record<string, Translation> = {
   'nav.contacts': { ru: 'Контакты', es: 'Contacto', en: 'Contact', fr: 'Contact' },
   'nav.estimate': { ru: 'Расчёт', es: 'Calcular', en: 'Estimate', fr: 'Estimation' },
   'nav.language': { ru: 'Язык', es: 'Idioma', en: 'Language', fr: 'Langue' },
+  'language.prompt': { ru: 'Мы выбрали язык по настройкам вашего браузера:', es: 'Hemos elegido el idioma según la configuración de tu navegador:', en: 'We selected a language based on your browser settings:', fr: 'Nous avons choisi la langue selon les réglages de votre navigateur :' },
+  'language.continue': { ru: 'Продолжить', es: 'Continuar', en: 'Continue', fr: 'Continuer' },
+  'language.choose': { ru: 'Выбрать язык', es: 'Elegir idioma', en: 'Choose language', fr: 'Choisir la langue' },
+  'language.close': { ru: 'Закрыть и сохранить язык', es: 'Cerrar y guardar el idioma', en: 'Close and save language', fr: 'Fermer et enregistrer la langue' },
   'nav.open': { ru: 'Открыть меню', es: 'Abrir menú', en: 'Open menu', fr: 'Ouvrir le menu' },
   'nav.close': { ru: 'Закрыть меню', es: 'Cerrar menú', en: 'Close menu', fr: 'Fermer le menu' },
   'brand.home': { ru: 'Adelfia Flow — на главную', es: 'Adelfia Flow — inicio', en: 'Adelfia Flow — home', fr: 'Adelfia Flow — accueil' },
@@ -200,21 +206,44 @@ const I18nContext = createContext<{
   t: (key: string) => string
 } | null>(null)
 
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('ru')
+function persistBrowserLocale(locale: Locale) {
+  window.localStorage.setItem(LANGUAGE_STORAGE_KEY, locale)
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${LANGUAGE_COOKIE}=${locale}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`
+}
+
+export function LanguageProvider({
+  children,
+  initialLocale,
+  shouldPrompt,
+}: {
+  children: ReactNode
+  initialLocale: Locale
+  shouldPrompt: boolean
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale)
+  const [promptOpen, setPromptOpen] = useState(shouldPrompt)
 
   useEffect(() => {
-    const saved = window.localStorage.getItem('forma-locale') as Locale | null
-    if (saved && LOCALES.some((item) => item.code === saved)) setLocaleState(saved)
+    const saved = window.localStorage.getItem(LANGUAGE_STORAGE_KEY)
+    if (!isLocale(saved)) return
+    setLocaleState(saved)
+    persistBrowserLocale(saved)
+    setPromptOpen(false)
   }, [])
 
   const setLocale = (nextLocale: Locale) => {
     setLocaleState(nextLocale)
-    window.localStorage.setItem('forma-locale', nextLocale)
+    persistBrowserLocale(nextLocale)
+    setPromptOpen(false)
   }
 
   useEffect(() => {
     document.documentElement.lang = locale
+    const pageMetadata = getPageMetadata(locale, window.location.pathname)
+    document.title = pageMetadata.title
+    const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
+    if (description) description.content = pageMetadata.description
   }, [locale])
 
   const value = useMemo(
@@ -226,7 +255,62 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     [locale],
   )
 
-  return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+  const languageName = LOCALES.find((item) => item.code === locale)?.name ?? locale.toUpperCase()
+
+  return (
+    <I18nContext.Provider value={value}>
+      {children}
+      {promptOpen && (
+        <aside
+          aria-label={MESSAGES['language.choose'][locale]}
+          aria-live="polite"
+          className="fixed inset-x-3 bottom-3 z-[85] mx-auto max-w-2xl rounded-2xl border border-border bg-card/95 p-4 shadow-[0_22px_70px_-22px] shadow-foreground/45 backdrop-blur-xl sm:bottom-5 sm:p-5"
+        >
+          <div className="flex items-start gap-4">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                {MESSAGES['language.prompt'][locale]} <strong className="text-foreground">{languageName}</strong>
+              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    persistBrowserLocale(locale)
+                    setPromptOpen(false)
+                  }}
+                  className="rounded-full bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground transition hover:shadow-[0_0_24px_-7px] hover:shadow-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                >
+                  {MESSAGES['language.continue'][locale]}
+                </button>
+                <span className="sr-only">{MESSAGES['language.choose'][locale]}</span>
+                {LOCALES.filter((item) => item.code !== locale).map((item) => (
+                  <button
+                    key={item.code}
+                    type="button"
+                    onClick={() => setLocale(item.code)}
+                    className="rounded-full border border-border bg-background px-3 py-2 text-xs font-bold text-foreground transition hover:border-primary/50 hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                persistBrowserLocale(locale)
+                setPromptOpen(false)
+              }}
+              aria-label={MESSAGES['language.close'][locale]}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border text-lg text-muted-foreground transition hover:border-primary/45 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              ×
+            </button>
+          </div>
+        </aside>
+      )}
+    </I18nContext.Provider>
+  )
 }
 
 export function useI18n() {

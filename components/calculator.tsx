@@ -11,6 +11,7 @@ import {
   DoorOpen,
   Droplets,
   Fan,
+  Gem,
   Hammer,
   House,
   LoaderCircle,
@@ -24,8 +25,15 @@ import {
 import { cn } from '@/lib/utils'
 import { getWhatsAppUrl, useI18n, type Locale } from '@/lib/i18n'
 import { calcText } from '@/lib/calculator-copy'
+import {
+  RENOVATION_TIERS,
+  calculateRenovationEstimate,
+  getRenovationTier,
+  type ProjectType,
+  type RenovationEstimate,
+  type RenovationTier,
+} from '@/lib/renovation-pricing'
 
-type ProjectType = 'bathroom' | 'kitchen' | 'integral'
 type PropertyCondition = 'lived-in' | 'newbuild'
 type WetZone = 'shower' | 'bath' | 'keep'
 type TowelRail = 'none' | 'electric' | 'water'
@@ -37,10 +45,10 @@ type Countertop = 'laminate' | 'quartz' | 'stone'
 type KitchenSplashback = 'tile' | 'quartz' | 'glass'
 type FloorFinish = 'tile' | 'wood' | 'microcement'
 type ClimateSystem = 'keep' | 'split' | 'ducted'
-type FinishLevel = 'standard' | 'premium' | 'signature'
 type CeilingType = 'paint' | 'plasterboard' | 'stretch'
 
 type CalculatorState = {
+  renovationTier: RenovationTier | null
   projectType: ProjectType
   area: number
   condition: PropertyCondition
@@ -71,7 +79,6 @@ type CalculatorState = {
   floorFinish: FloorFinish
   climateSystem: ClimateSystem
   replaceRadiators: boolean
-  finishLevel: FinishLevel
   smoothWalls: boolean
   ceilingType: CeilingType
   replaceWindows: boolean
@@ -80,14 +87,8 @@ type CalculatorState = {
   builtInStorage: boolean
 }
 
-type EstimateRow = {
-  key: string
-  label: string
-  value: number
-  color: string
-}
-
 const STEP_DATA = [
+  { label: 'Уровень ремонта', icon: Gem },
   { label: 'Проект', icon: Bath },
   { label: 'Характеристики', icon: Sparkles },
   { label: 'Строительные работы', icon: Hammer },
@@ -105,6 +106,7 @@ const PROJECT_LABELS: Record<ProjectType, string> = {
 }
 
 const initialState: CalculatorState = {
+  renovationTier: null,
   projectType: 'bathroom',
   area: 6,
   condition: 'lived-in',
@@ -135,7 +137,6 @@ const initialState: CalculatorState = {
   floorFinish: 'tile',
   climateSystem: 'keep',
   replaceRadiators: false,
-  finishLevel: 'premium',
   smoothWalls: true,
   ceilingType: 'paint',
   replaceWindows: false,
@@ -164,121 +165,20 @@ export function Calculator() {
     value: CalculatorState[K],
   ) => setState((current) => ({ ...current, [key]: value }))
 
-  const estimate = useMemo(() => {
-    let project = 0
-    let construction = 0
-    let utilities = 0
-    let climate = 0
-    let finishes = 0
-    let carpentry = 0
-
-    if (state.projectType === 'bathroom') {
-      const wallArea = state.area * 3.5
-      project = 620 + state.area * 42
-      construction =
-        state.area * (state.condition === 'lived-in' ? 720 : 590) +
-        (state.demolition ? state.area * 145 + 420 : 0) +
-        (state.layoutChange ? 980 : 0) +
-        (state.wetZone === 'shower' ? 1350 : state.wetZone === 'bath' ? 1850 : 320) +
-        (state.waterproofing ? state.area * 88 : 0)
-      utilities =
-        (state.replacePipes ? 1250 : 0) +
-        (state.replaceElectrics ? 680 : 0) +
-        state.sanitaryPoints * 310 +
-        state.lightingPoints * 115
-      climate =
-        (state.towelRail === 'electric' ? 340 : state.towelRail === 'water' ? 690 : 0) +
-        (state.floorHeating ? state.area * 110 : 0) +
-        (state.ventilation ? 380 : 0)
-      finishes =
-        wallArea *
-          (state.wallFinish === 'tile-full' ? 118 : state.wallFinish === 'tile-zones' ? 78 : 145) +
-        (state.ceilingRepair ? state.area * 74 : state.area * 34)
-      carpentry =
-        (state.door === 'replace' ? 760 : 0) +
-        (state.vanity === 'standard' ? 890 : state.vanity === 'custom' ? 1850 : 0) +
-        (state.niche ? 460 : 0)
-    }
-
-    if (state.projectType === 'kitchen') {
-      project = 760 + state.area * 48
-      construction =
-        state.area * (state.condition === 'lived-in' ? 545 : 430) +
-        (state.demolition ? state.area * 125 + 360 : 0) +
-        (state.layoutChange ? 1150 : 0) +
-        (state.joinLivingRoom ? 1850 : 0)
-      utilities =
-        (state.replacePipes ? 980 : 0) +
-        (state.replaceElectrics ? 820 : 0) +
-        state.sanitaryPoints * 260 +
-        state.lightingPoints * 105
-      climate =
-        (state.ventilation ? 650 : 0) +
-        (state.floorHeating ? state.area * 105 : 0) +
-        (state.replaceRadiators ? 620 : 0)
-      finishes =
-        state.area *
-          (state.floorFinish === 'tile' ? 92 : state.floorFinish === 'wood' ? 118 : 138) +
-        (state.kitchenSplashback === 'tile' ? 580 : state.kitchenSplashback === 'quartz' ? 980 : 720) +
-        (state.ceilingRepair ? state.area * 66 : state.area * 30)
-      carpentry =
-        (state.kitchenCabinets === 'keep' ? 0 : state.kitchenCabinets === 'modular' ? 4300 : 7900) +
-        (state.countertop === 'laminate' ? 680 : state.countertop === 'quartz' ? 1650 : 2750) +
-        (state.door === 'replace' ? 760 : 0)
-    }
-
-    if (state.projectType === 'integral') {
-      project = state.area * 38
-      construction =
-        state.area * (state.condition === 'lived-in' ? 355 : 285) +
-        (state.demolition ? state.area * 64 + 850 : 0) +
-        (state.layoutChange ? state.partitions * 880 : 0) +
-        (state.changeFloor ? state.area * 55 : 0)
-      utilities =
-        (state.replacePipes ? state.bathrooms * 1450 + 1050 : 0) +
-        (state.replaceElectrics ? state.area * 58 : 0)
-      climate =
-        (state.climateSystem === 'split' ? 6200 : state.climateSystem === 'ducted' ? 10800 : 0) +
-        (state.floorHeating ? state.area * 98 : 0) +
-        (state.replaceRadiators ? state.area * 31 : 0)
-      finishes =
-        state.area *
-          (state.finishLevel === 'standard' ? 350 : state.finishLevel === 'premium' ? 610 : 930) +
-        (state.smoothWalls ? state.area * 54 : 0) +
-        state.area *
-          (state.ceilingType === 'paint' ? 44 : state.ceilingType === 'plasterboard' ? 96 : 72)
-      carpentry =
-        (state.door === 'replace' ? state.doorsCount * 680 : 0) +
-        (state.replaceWindows ? state.windowsCount * 920 : 0) +
-        (state.builtInStorage ? 3600 : 0)
-    }
-
-    const rows: EstimateRow[] = [
-      { key: 'project', label: 'Проект и подготовка', value: project, color: 'bg-cyan' },
-      { key: 'construction', label: 'Строительные работы', value: construction, color: 'bg-primary' },
-      { key: 'utilities', label: 'Сантехника и электрика', value: utilities, color: 'bg-amber' },
-      { key: 'climate', label: 'Климат и вентиляция', value: climate, color: 'bg-cyan' },
-      { key: 'finishes', label: 'Отделочные материалы', value: finishes, color: 'bg-primary' },
-      { key: 'carpentry', label: 'Столярные изделия', value: carpentry, color: 'bg-amber' },
-    ].filter((row) => row.value > 0)
-
-    const rawTotal = rows.reduce((sum, row) => sum + row.value, 0)
-    const total = Math.round(rawTotal / 10) * 10
-    const low = Math.round((total * 0.92) / 50) * 50
-    const high = Math.round((total * 1.12) / 50) * 50
-    const days = Math.round(
-      state.projectType === 'integral'
-        ? 28 + state.area * 0.9 + (state.layoutChange ? state.partitions * 2 : 0)
-        : state.projectType === 'kitchen'
-          ? 18 + state.area * 1.25 + (state.joinLivingRoom ? 5 : 0)
-          : 14 + state.area * 1.6 + (state.layoutChange ? 4 : 0),
-    )
-
-    return { rows, total, low, high, days }
-  }, [state])
+  const estimate = useMemo(
+    () => calculateRenovationEstimate({
+      tier: state.renovationTier ?? 'economy',
+      projectType: state.projectType,
+      area: state.area,
+      layoutChange: state.layoutChange,
+      partitions: state.partitions,
+      joinLivingRoom: state.joinLivingRoom,
+    }),
+    [state.area, state.joinLivingRoom, state.layoutChange, state.partitions, state.projectType, state.renovationTier],
+  )
 
   useEffect(() => {
-    if (step !== 8) return
+    if (step !== STEP_DATA.length) return
     setCalculating(true)
     const timeout = window.setTimeout(() => setCalculating(false), 900)
     return () => window.clearTimeout(timeout)
@@ -286,7 +186,7 @@ export function Calculator() {
 
   const goToStep = (nextStep: number) => {
     setDirection(nextStep > step ? 1 : -1)
-    setStep(Math.min(8, Math.max(1, nextStep)))
+    setStep(Math.min(STEP_DATA.length, Math.max(1, nextStep)))
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -306,6 +206,9 @@ export function Calculator() {
     }))
   }
 
+  const selectedTier = state.renovationTier ? getRenovationTier(state.renovationTier) : null
+  const canContinue = step !== 1 || state.renovationTier !== null
+
   return (
     <main className="relative min-h-svh overflow-hidden bg-background px-4 pb-16 pt-28 md:pb-24 md:pt-36">
       <div className="pointer-events-none absolute inset-0 grid-noise opacity-45" />
@@ -322,7 +225,7 @@ export function Calculator() {
             </h1>
           </div>
           <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-            {tx('Вопросы меняются под выбранный тип ремонта. Расчёт адаптирован для проектов в Валенсии и показан в евро.')}
+            {tx('Сначала выберите уровень и тип ремонта. Рассчитаем базовую стоимость работ с IVA и соберём подробный план проекта.')}
           </p>
         </div>
 
@@ -342,15 +245,15 @@ export function Calculator() {
               <div className="mb-8 flex items-start justify-between gap-4">
                 <div>
                   <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
-                    {tx('Шаг')} {String(step).padStart(2, '0')} / 08
+                    {tx('Шаг')} {String(step).padStart(2, '0')} / {String(STEP_DATA.length).padStart(2, '0')}
                   </p>
                   <h2 className="mt-2 font-display text-2xl font-bold md:text-3xl">
                     {tx(STEP_DATA[step - 1].label)}
                   </h2>
                 </div>
-                {step < 8 && (
+                {step < STEP_DATA.length && selectedTier && (
                   <span className="hidden rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-xs text-primary sm:inline-flex">
-                    {tx(PROJECT_LABELS[state.projectType])}
+                    {tx(selectedTier.label)}{step > 1 ? ` · ${tx(PROJECT_LABELS[state.projectType])}` : ''}
                   </span>
                 )}
               </div>
@@ -378,7 +281,7 @@ export function Calculator() {
                 </motion.div>
               </AnimatePresence>
 
-              {step < 8 && (
+              {step < STEP_DATA.length && (
                 <div className="mt-10 flex items-center justify-between border-t border-border pt-6">
                   <button
                     type="button"
@@ -391,9 +294,10 @@ export function Calculator() {
                   <button
                     type="button"
                     onClick={() => goToStep(step + 1)}
-                    className="group inline-flex items-center gap-3 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-10px] shadow-primary transition-shadow hover:shadow-[0_0_38px_-8px] hover:shadow-primary"
+                    disabled={!canContinue}
+                    className="group inline-flex items-center gap-3 rounded-full bg-primary px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_0_30px_-10px] shadow-primary transition-shadow hover:shadow-[0_0_38px_-8px] hover:shadow-primary disabled:cursor-not-allowed disabled:opacity-45 disabled:shadow-none"
                   >
-                    {tx(step === 7 ? 'Рассчитать' : 'Продолжить')}
+                    {tx(step === STEP_DATA.length - 1 ? 'Рассчитать' : step === 1 && !canContinue ? 'Сначала выберите уровень ремонта' : 'Продолжить')}
                     <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                   </button>
                 </div>
@@ -403,7 +307,7 @@ export function Calculator() {
         </div>
 
         <p className="mx-auto mt-6 max-w-2xl text-center text-xs leading-relaxed text-muted-foreground">
-          {tx('Результат является предварительной оценкой. Точная стоимость определяется после замера и согласования спецификации.')}
+          {tx('Онлайн-расчёт включает работы и IVA. Материалы, мебель, оборудование и нестандартные решения рассчитываются после замера.')}
         </p>
       </div>
     </main>
@@ -484,13 +388,7 @@ type StepContentProps = {
   state: CalculatorState
   update: <K extends keyof CalculatorState>(key: K, value: CalculatorState[K]) => void
   onProjectChange: (projectType: ProjectType) => void
-  estimate: {
-    rows: EstimateRow[]
-    total: number
-    low: number
-    high: number
-    days: number
-  }
+  estimate: RenovationEstimate
   calculating: boolean
   submitted: boolean
   onSubmit: () => void
@@ -499,8 +397,33 @@ type StepContentProps = {
 
 function StepContent(props: StepContentProps) {
   const { step, state, update, onProjectChange } = props
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
 
   if (step === 1) {
+    return (
+      <StepSection
+        title="Какой уровень ремонта вам подходит?"
+        description="Уровень определяет базовую стоимость работ. Все материалы, мебель и оборудование рассчитываются отдельно."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {RENOVATION_TIERS.map((tier) => (
+            <TierChoiceCard
+              key={tier.key}
+              tier={tier}
+              selected={state.renovationTier === tier.key}
+              onClick={() => update('renovationTier', tier.key)}
+            />
+          ))}
+        </div>
+        <p className="rounded-2xl border border-primary/20 bg-primary/8 p-4 text-xs leading-relaxed text-muted-foreground">
+          {tx('В базовую цену входят демонтаж, стандартная подготовка, монтаж и базовое обновление инженерии. На выходе — готовый ремонт без стоимости материалов.')}
+        </p>
+      </StepSection>
+    )
+  }
+
+  if (step === 2) {
     return (
       <StepSection
         title="Что будем ремонтировать?"
@@ -533,7 +456,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 2) {
+  if (step === 3) {
     const isBathroom = state.projectType === 'bathroom'
     const isKitchen = state.projectType === 'kitchen'
 
@@ -576,7 +499,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 3) {
+  if (step === 4) {
     if (state.projectType === 'kitchen') {
       return (
         <StepSection title="Строительные работы" description="Только демонтаж и изменения, которые относятся к кухонной зоне.">
@@ -614,7 +537,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 4) {
+  if (step === 5) {
     if (state.projectType === 'kitchen') {
       return (
         <StepSection title="Сантехника и электрика" description="Подключения и электрика, необходимые именно для новой кухни.">
@@ -655,7 +578,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 5) {
+  if (step === 6) {
     if (state.projectType === 'kitchen') {
       return (
         <StepSection title="Климат кухни" description="Вентиляция и отопление только в кухонной зоне.">
@@ -703,7 +626,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 6) {
+  if (step === 7) {
     if (state.projectType === 'kitchen') {
       return (
         <StepSection title="Отделка кухни" description="Покрытия, которые непосредственно входят в ремонт кухонной зоны.">
@@ -728,14 +651,7 @@ function StepContent(props: StepContentProps) {
 
     if (state.projectType === 'integral') {
       return (
-        <StepSection title="Отделка объекта" description="Уровень материалов и подготовка поверхностей для всех помещений.">
-          <Question title="Уровень отделки">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <ChoiceCard selected={state.finishLevel === 'standard'} title="Практичный" detail="Надёжные серийные материалы" onClick={() => update('finishLevel', 'standard')} />
-              <ChoiceCard selected={state.finishLevel === 'premium'} title="Премиальный" detail="Натуральные фактуры и сложные узлы" onClick={() => update('finishLevel', 'premium')} />
-              <ChoiceCard selected={state.finishLevel === 'signature'} title="Индивидуальный" detail="Эксклюзивные решения под проект" onClick={() => update('finishLevel', 'signature')} />
-            </div>
-          </Question>
+        <StepSection title="Отделка объекта" description="Подготовка стен и решение для потолков фиксируются в плане проекта.">
           <BinaryChoice title="Выравнивать стены под покраску?" value={state.smoothWalls} onChange={(value) => update('smoothWalls', value)} />
           <Question title="Потолки">
             <div className="grid gap-3 sm:grid-cols-3">
@@ -762,7 +678,7 @@ function StepContent(props: StepContentProps) {
     )
   }
 
-  if (step === 7) {
+  if (step === 8) {
     if (state.projectType === 'kitchen') {
       return (
         <StepSection title="Мебель и столярные изделия" description="Только кухонный гарнитур, столешница и дверь.">
@@ -852,6 +768,51 @@ function Question({ title, children }: { title: string; children: ReactNode }) {
       <legend className="mb-3 text-sm font-semibold text-foreground">{calcText(title, locale)}</legend>
       {children}
     </fieldset>
+  )
+}
+
+function TierChoiceCard({
+  tier,
+  selected,
+  onClick,
+}: {
+  tier: (typeof RENOVATION_TIERS)[number]
+  selected: boolean
+  onClick: () => void
+}) {
+  const { locale } = useI18n()
+  const tx = (value: string) => calcText(value, locale)
+  const price = tier.rateLow === tier.rateHigh
+    ? formatCurrency(tier.rateLow, locale)
+    : `${formatCurrency(tier.rateLow, locale)}–${formatCurrency(tier.rateHigh, locale)}`
+
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={onClick}
+      className={cn(
+        'relative min-h-64 overflow-hidden rounded-3xl border p-5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+        selected
+          ? 'border-primary bg-primary/10 glow-border'
+          : 'border-border bg-background/30 hover:-translate-y-1 hover:border-primary/45 hover:bg-secondary/35',
+      )}
+    >
+      <span className={cn('absolute inset-x-0 top-0 h-1', tier.accent)} aria-hidden="true" />
+      <span className="flex items-center justify-between gap-4">
+        <span className={cn('h-3 w-3 rounded-full ring-4 ring-background', tier.accent)} aria-hidden="true" />
+        <span className={cn('flex h-7 w-7 items-center justify-center rounded-full border', selected ? 'border-primary bg-primary text-primary-foreground' : 'border-border')}>
+          {selected && <Check className="h-4 w-4" />}
+        </span>
+      </span>
+      <span className="mt-8 block font-display text-2xl font-bold text-foreground">{tx(tier.label)}</span>
+      <span className="mt-2 block min-h-10 text-xs leading-relaxed text-muted-foreground">{tx(tier.tagline)}</span>
+      <span className="mt-7 block font-display text-2xl font-bold text-primary">{price}</span>
+      <span className="mt-1 block text-xs font-medium text-muted-foreground">{tx('за м²')}</span>
+      <span className="mt-4 block border-t border-border pt-4 text-[11px] leading-relaxed text-muted-foreground">
+        {tx('работы и IVA включены · материалы отдельно')}
+      </span>
+    </button>
   )
 }
 
@@ -1068,9 +1029,101 @@ function Counter({
   )
 }
 
+function formatArea(value: number, locale: Locale) {
+  return `${new Intl.NumberFormat(locale === 'ru' ? 'ru-RU' : locale === 'es' ? 'es-ES' : locale === 'fr' ? 'fr-FR' : 'en-GB', {
+    maximumFractionDigits: 1,
+  }).format(value)} м²`
+}
+
+function formatEstimateRange(estimate: RenovationEstimate, locale: Locale) {
+  return estimate.low === estimate.high
+    ? formatCurrency(estimate.low, locale)
+    : `${formatCurrency(estimate.low, locale)}–${formatCurrency(estimate.high, locale)}`
+}
+
+function getProjectPlanLines(state: CalculatorState, tx: (value: string) => string) {
+  const yesNo = (value: boolean) => tx(value ? 'Да' : 'Нет')
+  const line = (label: string, value: string | number) => `${tx(label)}: ${typeof value === 'string' ? tx(value) : value}`
+  const lines: string[] = [
+    line('Текущее состояние', state.condition === 'newbuild' ? 'Новостройка' : 'Объект с отделкой'),
+  ]
+
+  if (state.projectType === 'bathroom') {
+    lines.push(
+      line('Демонтировать существующую отделку?', yesNo(state.demolition)),
+      line('Менять расположение сантехники?', yesNo(state.layoutChange)),
+      line('Основная мокрая зона', state.wetZone === 'shower' ? 'Душевая' : state.wetZone === 'bath' ? 'Ванна' : 'Оставить'),
+      line('Выполнить новую гидроизоляцию?', yesNo(state.waterproofing)),
+      line('Заменить водопровод и канализацию?', yesNo(state.replacePipes)),
+      line('Обновить электрику ванной?', yesNo(state.replaceElectrics)),
+      line('Сантехнические точки', state.sanitaryPoints),
+      line('Точки света и розетки', state.lightingPoints),
+      line('Полотенцесушитель', state.towelRail === 'none' ? 'Не нужен' : state.towelRail === 'electric' ? 'Электрический' : 'Водяной'),
+      line('Тёплый пол?', yesNo(state.floorHeating)),
+      line('Новая вытяжная вентиляция?', yesNo(state.ventilation)),
+      line('Отделка стен', state.wallFinish === 'tile-full' ? 'Плитка полностью' : state.wallFinish === 'tile-zones' ? 'Плитка в мокрых зонах' : 'Микроцемент'),
+      line('Выравнивать и окрашивать потолок?', yesNo(state.ceilingRepair)),
+      line('Дверь ванной', state.door === 'replace' ? 'Заменить' : 'Сохранить'),
+      line('Тумба под раковину', state.vanity === 'none' ? 'Не нужна' : state.vanity === 'standard' ? 'Готовая' : 'На заказ'),
+      line('Нужна встроенная ниша для хранения?', yesNo(state.niche)),
+    )
+  }
+
+  if (state.projectType === 'kitchen') {
+    lines.push(
+      line('Демонтировать существующую отделку и оборудование?', yesNo(state.demolition)),
+      line('Менять расположение кухонной зоны?', yesNo(state.layoutChange)),
+      line('Объединять кухню с гостиной?', yesNo(state.joinLivingRoom)),
+      line('Перенести или заменить кухонные трубы?', yesNo(state.replacePipes)),
+      line('Обновить электрику кухни?', yesNo(state.replaceElectrics)),
+      line('Сантехнические подключения', state.sanitaryPoints),
+      line('Электрические точки', state.lightingPoints),
+      line('Установить новую вытяжку и вентиляционный канал?', yesNo(state.ventilation)),
+      line('Тёплый пол на кухне?', yesNo(state.floorHeating)),
+      line('Перенести или заменить радиатор?', yesNo(state.replaceRadiators)),
+      line('Кухонный фартук', state.kitchenSplashback === 'tile' ? 'Плитка' : state.kitchenSplashback === 'quartz' ? 'Кварц' : 'Стекло'),
+      line('Напольное покрытие', state.floorFinish === 'tile' ? 'Плитка' : state.floorFinish === 'wood' ? 'Дерево' : 'Микроцемент'),
+      line('Выравнивать и окрашивать потолок?', yesNo(state.ceilingRepair)),
+      line('Кухонный гарнитур', state.kitchenCabinets === 'keep' ? 'Сохранить' : state.kitchenCabinets === 'modular' ? 'Модульный' : 'На заказ'),
+      line('Столешница', state.countertop === 'laminate' ? 'Ламинат' : state.countertop === 'quartz' ? 'Кварц' : 'Натуральный камень'),
+      line('Дверь кухни', state.door === 'replace' ? 'Заменить' : 'Сохранить'),
+    )
+  }
+
+  if (state.projectType === 'integral') {
+    lines.push(
+      line('Спальни', state.bedrooms),
+      line('Санузлы', state.bathrooms),
+      line('Нужен полный демонтаж существующей отделки?', yesNo(state.demolition)),
+      line('Планируется перепланировка?', yesNo(state.layoutChange)),
+      ...(state.layoutChange ? [line('Перегородки', state.partitions)] : []),
+      line('Полностью заменить напольные покрытия?', yesNo(state.changeFloor)),
+      line('Полностью заменить водопровод и канализацию?', yesNo(state.replacePipes)),
+      line('Полностью заменить электрику?', yesNo(state.replaceElectrics)),
+      line('Кондиционирование', state.climateSystem === 'keep' ? 'Без новой системы' : state.climateSystem === 'split' ? 'Сплит-системы' : 'Канальная система'),
+      line('Тёплый пол во всём объекте?', yesNo(state.floorHeating)),
+      line('Заменить радиаторы?', yesNo(state.replaceRadiators)),
+      line('Выравнивать стены под покраску?', yesNo(state.smoothWalls)),
+      line('Потолки', state.ceilingType === 'paint' ? 'Под покраску' : state.ceilingType === 'plasterboard' ? 'Гипсокартон' : 'Натяжной'),
+      line('Заменить межкомнатные двери?', yesNo(state.door === 'replace')),
+      ...(state.door === 'replace' ? [line('Межкомнатные двери', state.doorsCount)] : []),
+      line('Заменить окна?', yesNo(state.replaceWindows)),
+      ...(state.replaceWindows ? [line('Окна', state.windowsCount)] : []),
+      line('Нужно встроенное хранение на заказ?', yesNo(state.builtInStorage)),
+    )
+  }
+
+  return lines
+}
+
 function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset }: StepContentProps) {
   const { locale, t } = useI18n()
   const tx = (value: string) => calcText(value, locale)
+  const tier = getRenovationTier(state.renovationTier ?? 'economy')
+  const estimateRange = formatEstimateRange(estimate, locale)
+  const tierRate = tier.rateLow === tier.rateHigh
+    ? formatCurrency(tier.rateLow, locale)
+    : `${formatCurrency(tier.rateLow, locale)}–${formatCurrency(tier.rateHigh, locale)}`
 
   if (calculating) {
     return (
@@ -1081,7 +1134,7 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
           <LoaderCircle className="h-8 w-8 animate-pulse text-primary" />
         </div>
         <h3 className="mt-8 font-display text-2xl font-bold">{tx('Собираем предварительную смету')}</h3>
-        <p className="mt-2 text-sm text-muted-foreground">{tx('Учитываем выбранные работы и материалы…')}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{tx('Рассчитываем базовую стоимость работ…')}</p>
       </div>
     )
   }
@@ -1109,10 +1162,23 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
     const name = String(data.get('name') ?? '').trim()
     const phone = String(data.get('phone') ?? '').trim()
     const email = String(data.get('email') ?? '').trim()
+    const dayWord = locale === 'ru' ? 'дней' : locale === 'es' ? 'días' : locale === 'fr' ? 'jours' : 'days'
+    const projectLines = getProjectPlanLines(state, tx)
     const message = [
-      locale === 'ru' ? 'Здравствуйте! Хочу уточнить смету на ремонт в Валенсии.' : locale === 'es' ? '¡Hola! Quiero concretar el presupuesto de una reforma en Valencia.' : locale === 'fr' ? 'Bonjour ! Je souhaite préciser le devis de rénovation à Valence.' : 'Hello! I would like to confirm a renovation estimate in Valencia.',
-      `${tx(PROJECT_LABELS[state.projectType])}: ${formatCurrency(estimate.low, locale)}–${formatCurrency(estimate.high, locale)}`,
-      `${estimate.days}–${estimate.days + 5} ${locale === 'ru' ? 'дней' : locale === 'es' ? 'días' : locale === 'fr' ? 'jours' : 'days'}`,
+      tx('Вот мой план ремонта. Хотел бы обсудить детали и точную смету.'),
+      '',
+      `${tx('Уровень ремонта')}: ${tx(tier.label)} (${tierRate} ${tx('за м²')})`,
+      `${tx('Проект')}: ${tx(PROJECT_LABELS[state.projectType])}`,
+      `${tx('Фактическая площадь')}: ${formatArea(estimate.actualArea, locale)}`,
+      ...(estimate.minimumApplied ? [`${tx('Расчётная площадь')}: ${formatArea(estimate.billableArea, locale)} (${tx('Минимальный оплачиваемый объём')})`] : []),
+      `${tx('Ориентировочная стоимость работ')}: ${estimateRange} (${tx('IVA включён')})`,
+      `${estimate.days}–${estimate.days + 5} ${dayWord}`,
+      '',
+      `${tx('Параметры проекта')}:`,
+      ...projectLines.map((line) => `• ${line}`),
+      '',
+      tx('Дополнительные решения обсудим после замера. Материалы и оборудование в сумму не входят.'),
+      '',
       `${tx('Имя')}: ${name}`,
       `${tx('Телефон')}: ${phone}`,
       `Email: ${email}`,
@@ -1126,44 +1192,47 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
       <div className="overflow-hidden rounded-3xl border border-primary/35 bg-primary/8 p-6 glow-border sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-background/50 px-3 py-1.5 text-xs text-primary">
-            <ShieldCheck className="h-4 w-4" /> {tx(PROJECT_LABELS[state.projectType])}
+            <ShieldCheck className="h-4 w-4" /> {tx(tier.label)} · {tx(PROJECT_LABELS[state.projectType])}
           </span>
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
             <Clock3 className="h-4 w-4 text-primary" /> ≈ {estimate.days}–{estimate.days + 5} {locale === 'ru' ? 'дней' : locale === 'es' ? 'días' : locale === 'fr' ? 'jours' : 'days'}
           </span>
         </div>
 
-        <p className="mt-7 text-sm text-muted-foreground">{tx('Ориентировочный диапазон')}</p>
+        <p className="mt-7 text-sm text-muted-foreground">{tx('Базовая стоимость работ')}</p>
         <p className="mt-2 whitespace-nowrap font-display text-[clamp(1.75rem,3vw,3.25rem)] font-bold leading-none text-primary text-glow">
-          {formatCurrency(estimate.low, locale)}–{formatCurrency(estimate.high, locale)}
+          {estimateRange}
         </p>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          {tx('Средний ориентир:')} {formatCurrency(estimate.total, locale)}. {tx('Налоги и окончательная спецификация уточняются после замера.')}
-        </p>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">{tx('IVA включён')} · {tx('Материалы отдельно')}</p>
 
-        <div className="mt-8 space-y-4 border-t border-border pt-6">
-          {estimate.rows.map((row) => {
-            const percent = Math.max(3, Math.round((row.value / estimate.total) * 100))
-            return (
-              <div key={row.key}>
-                <div className="flex items-center justify-between gap-4 text-xs">
-                  <span className="text-muted-foreground">{tx(row.label)}</span>
-                  <span className="font-mono font-semibold text-foreground">{formatCurrency(row.value, locale)}</span>
-                </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <motion.div initial={{ width: 0 }} animate={{ width: `${percent}%` }} transition={{ duration: 0.7 }} className={cn('h-full rounded-full', row.color)} />
-                </div>
-              </div>
-            )
-          })}
+        <dl className="mt-8 grid gap-3 border-t border-border pt-6 sm:grid-cols-2">
+          <div className="rounded-2xl bg-background/45 p-4">
+            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{tx('Цена тарифа')}</dt>
+            <dd className="mt-1 font-mono text-sm font-semibold">{tierRate} {tx('за м²')}</dd>
+          </div>
+          <div className="rounded-2xl bg-background/45 p-4">
+            <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{tx('Фактическая площадь')}</dt>
+            <dd className="mt-1 font-mono text-sm font-semibold">{formatArea(estimate.actualArea, locale)}</dd>
+          </div>
+          {estimate.minimumApplied && (
+            <div className="rounded-2xl border border-amber/30 bg-amber/10 p-4 sm:col-span-2">
+              <dt className="text-[11px] uppercase tracking-wide text-muted-foreground">{tx('Расчётная площадь')}</dt>
+              <dd className="mt-1 font-mono text-sm font-semibold">{formatArea(estimate.billableArea, locale)} · {tx('Минимальный оплачиваемый объём')}</dd>
+            </div>
+          )}
+        </dl>
+
+        <div className="mt-4 rounded-2xl border border-border bg-background/35 p-4">
+          <p className="text-xs font-semibold text-foreground">{tx('Дополнительные решения')}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{tx('Уточняются после замера и не увеличивают онлайн-расчёт.')}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col rounded-3xl border border-border bg-background/35 p-6 sm:p-8">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-primary">{tx('Следующий шаг')}</p>
-        <h3 className="mt-3 font-display text-2xl font-bold">{tx('Получить точную смету')}</h3>
+        <h3 className="mt-3 font-display text-2xl font-bold">{tx('Обсудить план и точную смету')}</h3>
         <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-          {tx('Оставьте контакты — параметры расчёта уже подготовлены.')}
+          {tx('Все выбранные параметры будут подготовлены в сообщении WhatsApp. Вы проверите его перед отправкой.')}
         </p>
         <div className="mt-6 space-y-4">
           <FormField label="Имя">
@@ -1177,7 +1246,7 @@ function ResultStep({ state, estimate, calculating, submitted, onSubmit, onReset
           </FormField>
         </div>
         <button type="submit" className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-primary-foreground transition-shadow hover:shadow-[0_0_34px_-7px] hover:shadow-primary">
-          {tx('Отправить расчёт')} <Send className="h-4 w-4" />
+          {tx('Отправить план в WhatsApp')} <Send className="h-4 w-4" />
         </button>
         <button type="button" onClick={onReset} className="mt-3 inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
           <RotateCcw className="h-3.5 w-3.5" /> {tx('Начать заново')}
